@@ -1,0 +1,11 @@
+Kompleti da idu od 12-14.5k, gornji i donji delovi da idu od 6-8k
+
+1. Srediti lepo kod i obrisati nepotrebne komentare (dodatno cu to da uradim)
+
+2. Skripta za kontakt i za checkout da se sredi kada se deploya sajt
+a) napravi se mail preko loopie koji bi bio nesto kao kontakt@prestigewear.rs
+b) ide se u google drive pa u sheets i pravi se tabela
+c) pa u extenzije i onda cu da kazem gemini da mi da kod
+d) deploy i to i da stavim da svi mogu da vide
+
+3. Probati naci neke greske i njih ispraviti

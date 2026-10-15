@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Korpa i završetak kupovine nemaju smisla u rezultatima pretrage
+Disallow: /html/korpa.html
+Disallow: /html/checkout.html
+
+Sitemap: https://prestigewearr.netlify.app/sitemap.xml
