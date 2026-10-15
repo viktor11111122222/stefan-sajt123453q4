@@ -55,6 +55,8 @@
         const dugme = e.target.closest("[data-akcija]");
         if (!dugme) return;
         const red = dugme.closest(".cart-item");
+        // Red koji već nestaje se ne dira – dupli klik bi obrisao i sledeću stavku
+        if (red.classList.contains("is-removing")) return;
         const index = Number(red.dataset.index);
         const stavka = PW.korpa.stavke()[index];
         if (!stavka) return;
