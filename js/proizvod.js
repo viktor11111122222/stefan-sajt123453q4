@@ -23,7 +23,7 @@
         sadrzaj.outerHTML =
             '<div class="section--tight"><div class="empty-state">' +
             '<span class="perk-icon">' + PW.ikonica("search", "icon--lg") + "</span>" +
-            "<h2>Proizvod nije pronađen</h2>" +
+            "<h1>Proizvod nije pronađen</h1>" +
             "<p>Moguće je da model više nije u ponudi ili da je link neispravan. Pogledajte ostale modele u katalogu.</p>" +
             '<a class="btn btn--primary" href="./katalog.html">Nazad na katalog ' + PW.ikonica("arrow-right", "icon--arrow") + "</a>" +
             "</div></div>";
@@ -202,6 +202,19 @@
 
     function dodaj(odmah) {
         if (!proveriVelicinu()) return;
+        // Na maksimumu se ništa ne dodaje – ne sme da piše "Dodato u korpu" ako nije dodato
+        if (PW.korpa.kolicina(id, boja.ime, velicina) >= PW.korpa.MAKS) {
+            if (odmah) {
+                location.href = "./checkout.html";
+                return;
+            }
+            PW.toast({
+                naslov: "Već imate " + PW.korpa.MAKS + " komada u korpi",
+                tekst: "Za veću količinu nam pišite – rado ćemo pomoći.",
+                akcija: { tekst: "Korpa", href: "./korpa.html" }
+            });
+            return;
+        }
         if (!PW.korpa.dodaj(id, boja.ime, velicina, 1)) {
             PW.toast({ naslov: "Korpa nije sačuvana", tekst: "Pregledač blokira skladištenje. Pokušajte u drugom pregledaču." });
             return;
@@ -242,17 +255,17 @@
     }
 
     // ---------- Preporuke ----------
-    // Prvo isti model (ista linija), zatim ostali – bez nasumičnog mešanja.
+    // Prvo ostali delovi istog modela (npr. "Nike Tech Fleece 2023 Sivi"), zatim ista kolekcija,
+    // pa ostali; unutar toga druga kategorija pre iste – bez nasumičnog mešanja.
     const preporukeGrid = document.getElementById("preporuke-grid");
     if (preporukeGrid) {
-        const linija = function (x) { return x.includes("2025") ? "2025" : x.includes("Syna") ? "syna" : "2023"; };
-        const mojaLinija = linija(p.naziv);
+        const model = function (x) { return x.naziv.split(" – ")[0]; };
+        const kolekcija = function (x) { return x.naziv.includes("2025") ? "2025" : x.naziv.includes("Syna") ? "syna" : "2023"; };
+        const bodovi = function (x) {
+            return (model(x) === model(p)) * 4 + (kolekcija(x) === kolekcija(p)) * 2 + (x.kategorija !== p.kategorija);
+        };
         const ostali = Object.keys(window.PW_PROIZVODI).filter(function (k) { return k !== id; });
-        ostali.sort(function (a, b) {
-            const pa = PW.proizvod(a), pb = PW.proizvod(b);
-            return (linija(pb.naziv) === mojaLinija) - (linija(pa.naziv) === mojaLinija) ||
-                (pb.kategorija !== p.kategorija) - (pa.kategorija !== p.kategorija);
-        });
+        ostali.sort(function (a, b) { return bodovi(PW.proizvod(b)) - bodovi(PW.proizvod(a)); });
         preporukeGrid.innerHTML = ostali.slice(0, 4).map(function (k) {
             return PW.karticaHTML(k, { reveal: true });
         }).join("");

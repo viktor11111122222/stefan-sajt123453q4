@@ -82,6 +82,16 @@
     // pa korpa ne može da sadrži staru ili izmenjenu cenu.
 
     const KLJUC_KORPE = "prestigeKorpa";
+    const MAKS_KOLICINA = 10;
+
+    // Stavka mora imati boju i veličinu koje proizvod stvarno ima – inače bi porudžbina
+    // stigla bez veličine ili sa bojom koju kupac nije izabrao.
+    function ispravnaStavka(s) {
+        const p = window.PW_PROIZVODI[s.id];
+        return Boolean(p) &&
+            p.velicine.includes(s.velicina) &&
+            p.boje.some(function (b) { return b.ime === s.boja; });
+    }
 
     function citajKorpu() {
         let sirovo;
@@ -96,13 +106,13 @@
         const spojeno = [];
         sirovo.forEach(function (s) {
             if (!s || !s.id) return;
-            // Proizvod koji je u međuvremenu uklonjen iz ponude se izbacuje iz korpe
-            if (window.PW_PROIZVODI && !window.PW_PROIZVODI[s.id]) return;
-            const kolicina = Math.max(1, Math.min(10, parseInt(s.kolicina, 10) || 1));
+            // Proizvod (ili boja/veličina) koji je u međuvremenu uklonjen iz ponude se izbacuje iz korpe
+            if (window.PW_PROIZVODI && !ispravnaStavka(s)) return;
+            const kolicina = Math.max(1, Math.min(MAKS_KOLICINA, parseInt(s.kolicina, 10) || 1));
             const postojeca = spojeno.find(function (x) {
                 return x.id === s.id && x.boja === s.boja && x.velicina === s.velicina;
             });
-            if (postojeca) postojeca.kolicina = Math.min(10, postojeca.kolicina + kolicina);
+            if (postojeca) postojeca.kolicina = Math.min(MAKS_KOLICINA, postojeca.kolicina + kolicina);
             else spojeno.push({ id: s.id, boja: s.boja || "", velicina: s.velicina || "", kolicina: kolicina });
         });
         return spojeno;
@@ -120,22 +130,33 @@
     }
 
     PW.korpa = {
+        MAKS: MAKS_KOLICINA,
+
         stavke: citajKorpu,
+
+        // Koliko komada tačno ove stavke (model + boja + veličina) već ima u korpi
+        kolicina: function (id, boja, velicina) {
+            const s = citajKorpu().find(function (x) {
+                return x.id === id && x.boja === boja && x.velicina === velicina;
+            });
+            return s ? s.kolicina : 0;
+        },
 
         dodaj: function (id, boja, velicina, kolicina) {
             const stavke = citajKorpu();
             const postojeca = stavke.find(function (x) {
                 return x.id === id && x.boja === boja && x.velicina === velicina;
             });
-            if (postojeca) postojeca.kolicina = Math.min(10, postojeca.kolicina + (kolicina || 1));
-            else stavke.push({ id: id, boja: boja, velicina: velicina, kolicina: kolicina || 1 });
+            kolicina = Math.max(1, Math.min(MAKS_KOLICINA, kolicina || 1));
+            if (postojeca) postojeca.kolicina = Math.min(MAKS_KOLICINA, postojeca.kolicina + kolicina);
+            else stavke.push({ id: id, boja: boja, velicina: velicina, kolicina: kolicina });
             return sacuvajKorpu(stavke);
         },
 
         postaviKolicinu: function (index, kolicina) {
             const stavke = citajKorpu();
             if (!stavke[index]) return;
-            stavke[index].kolicina = Math.max(1, Math.min(10, kolicina));
+            stavke[index].kolicina = Math.max(1, Math.min(MAKS_KOLICINA, kolicina));
             sacuvajKorpu(stavke);
         },
 

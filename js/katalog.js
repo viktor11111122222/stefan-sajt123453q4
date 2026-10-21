@@ -23,15 +23,31 @@
     pretraga.value = params.get("q") || "";
     if (["rastuce", "opadajuce", "popust"].includes(params.get("sort"))) sortiranje.value = params.get("sort");
 
-    // Pretraga bez obzira na kvačice (sivi = sivi, crno-sivi = crno sivi...)
-    const normalizuj = function (t) { return PW.slug(t).replace(/-/g, " "); };
+    // Pretraga bez obzira na kvačice, redosled reči i rod/broj (crni = crna = crno, sivi = siva,
+    // "crno-sivi" = "sivi crno"). Svaka reč iz upita mora da se nađe u nazivu, kategoriji ili boji.
+    const reci = function (t) { return PW.slug(t).split("-").filter(Boolean); };
+    const koren = function (r) { return r.length > 3 ? r.replace(/[aeiou]$/, "") : r; };
+
+    // Reči koje kupci često kucaju, a nisu u nazivu proizvoda
+    const SINONIMI = { komplet: "trenerka kompleti", gornji: "duks dukserica jakna gornji delovi", donji: "donji delovi pantalone" };
 
     const sviIdjevi = Object.keys(proizvodi);
     const indeks = {};
     sviIdjevi.forEach(function (id) {
         const p = proizvodi[id];
-        indeks[id] = normalizuj([p.naziv, PW.nazivKategorije[p.kategorija], p.boje.map(function (b) { return b.ime; }).join(" ")].join(" "));
+        indeks[id] = reci([
+            p.naziv,
+            PW.nazivKategorije[p.kategorija],
+            SINONIMI[p.kategorija],
+            p.boje.map(function (b) { return b.ime; }).join(" ")
+        ].join(" ")).map(koren);
     });
+
+    function odgovara(id, upit) {
+        return upit.every(function (r) {
+            return indeks[id].some(function (x) { return x.startsWith(r); });
+        });
+    }
 
     // Broj proizvoda po kategoriji na čipovima
     cipovi.forEach(function (c) {
@@ -47,10 +63,10 @@
     let prviPrikaz = true;
 
     function prikazi() {
-        const upit = normalizuj(pretraga.value.trim());
+        const upit = reci(pretraga.value).map(koren);
         let lista = sviIdjevi.filter(function (id) {
             const p = proizvodi[id];
-            return (kategorija === "sve" || p.kategorija === kategorija) && (!upit || indeks[id].includes(upit));
+            return (kategorija === "sve" || p.kategorija === kategorija) && odgovara(id, upit);
         });
 
         if (sortiranje.value === "rastuce") lista.sort(function (a, b) { return proizvodi[a].cena - proizvodi[b].cena; });

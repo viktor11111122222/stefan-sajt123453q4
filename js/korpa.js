@@ -13,6 +13,11 @@
 
     const smanjenoKretanje = window.matchMedia("(prefers-reduced-motion: reduce)");
 
+    // Stavke koje upravo nestaju (animacija). Pamte se po sadržaju, ne po poziciji –
+    // pozicija se pomeri čim se ukloni neka stavka iznad.
+    const kljuc = function (s) { return s.id + "|" + s.boja + "|" + s.velicina; };
+    const uklanjanje = new Set();
+
     function prikazi() {
         const linije = PW.korpa.linije();
         const imaStavki = linije.length > 0;
@@ -23,7 +28,7 @@
         lista.innerHTML = linije.map(function (l) {
             const url = PW.urlProizvoda(l.id, l.boja);
             return (
-                '<li class="cart-item" data-index="' + l.index + '">' +
+                '<li class="cart-item' + (uklanjanje.has(kljuc(l)) ? " is-removing" : "") + '" data-index="' + l.index + '">' +
                     '<a class="cart-item-media" href="' + url + '" tabindex="-1" aria-hidden="true">' + PW.imgHTML(l.slika, 640, "") + "</a>" +
                     '<div class="cart-item-info">' +
                         '<a class="cart-item-name" href="' + url + '">' + PW.esc(l.proizvod.naziv) + "</a>" +
@@ -34,7 +39,7 @@
                         '<div class="qty" role="group" aria-label="Količina">' +
                             '<button type="button" data-akcija="minus" aria-label="Smanji količinu"' + (l.kolicina <= 1 ? " disabled" : "") + ">" + PW.ikonica("minus", "icon--sm") + "</button>" +
                             '<output aria-live="polite">' + l.kolicina + "</output>" +
-                            '<button type="button" data-akcija="plus" aria-label="Povećaj količinu"' + (l.kolicina >= 10 ? " disabled" : "") + ">" + PW.ikonica("plus", "icon--sm") + "</button>" +
+                            '<button type="button" data-akcija="plus" aria-label="Povećaj količinu"' + (l.kolicina >= PW.korpa.MAKS ? " disabled" : "") + ">" + PW.ikonica("plus", "icon--sm") + "</button>" +
                         "</div>" +
                         '<strong class="cart-item-total price">' + PW.rsd(l.ukupno) + "</strong>" +
                         '<button type="button" class="remove-btn" data-akcija="ukloni" aria-label="Ukloni ' + PW.esc(l.proizvod.naziv) + ' iz korpe">' + PW.ikonica("trash", "icon--sm") + '<span class="remove-label">Ukloni</span></button>' +
@@ -65,8 +70,14 @@
         if (dugme.dataset.akcija === "minus") PW.korpa.postaviKolicinu(index, stavka.kolicina - 1);
         if (dugme.dataset.akcija === "ukloni") {
             // Kratko izbledi pa nestane (brže od ulaska – sistem odgovara)
+            const k = kljuc(stavka);
+            uklanjanje.add(k);
             red.classList.add("is-removing");
-            setTimeout(function () { PW.korpa.ukloni(index); }, smanjenoKretanje.matches ? 0 : 180);
+            setTimeout(function () {
+                uklanjanje.delete(k);
+                const trenutni = PW.korpa.stavke().findIndex(function (s) { return kljuc(s) === k; });
+                if (trenutni > -1) PW.korpa.ukloni(trenutni);
+            }, smanjenoKretanje.matches ? 0 : 180);
         }
     });
 

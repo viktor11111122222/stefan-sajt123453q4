@@ -481,6 +481,8 @@ h1, h2, h3, h4, p, figure, blockquote {
 
 @media (max-width: 959px) {
     .main-nav { display: none; }
+    /* Navigacija je sakrivena, pa je ne gura margin-inline: auto – korpa i meni idu uz desnu ivicu */
+    .main-nav + .header-actions { margin-left: auto; }
     .menu-btn { display: inline-grid; }
     .brand img { width: 36px; height: 36px; }
     .brand-name { font-size: 21px; }
@@ -1506,6 +1508,7 @@ h1, h2, h3, h4, p, figure, blockquote {
     margin-bottom: 6px;
 }
 
+.empty-state h1,
 .empty-state h2 {
     font-size: 22px;
     font-weight: 600;

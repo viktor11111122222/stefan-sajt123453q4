@@ -58,14 +58,16 @@
         ime: { test: function (v) { return v.length >= 2; }, poruka: "Unesite ime." },
         prezime: { test: function (v) { return v.length >= 2; }, poruka: "Unesite prezime." },
         telefon: {
-            test: function (v) { return /^(\+381|00381|0)[1-9]\d{6,9}$/.test(v.replace(/[\s\-/()]/g, "")); },
+            // 064..., +381 64..., 00381 64..., a prihvata se i čest oblik "+381 (0)64..."
+            test: function (v) { return /^(?:(?:\+|00)3810?|0)[1-9]\d{6,9}$/.test(v.replace(/[\s\-/()]/g, "")); },
             poruka: "Unesite ispravan broj telefona, npr. 064 123 4567."
         },
         email: {
             test: function (v) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v); },
             poruka: "Unesite ispravnu email adresu."
         },
-        adresa: { test: function (v) { return v.length >= 4 && /\d/.test(v); }, poruka: "Unesite ulicu i kućni broj." },
+        // Kućni broj ili "bb" (bez broja) – čest slučaj u manjim mestima
+        adresa: { test: function (v) { return v.length >= 4 && /\d|\bbb\b/i.test(v); }, poruka: "Unesite ulicu i kućni broj (ili „bb“ ako nema broja)." },
         grad: { test: function (v) { return v.length >= 2; }, poruka: "Unesite grad." },
         postanski_broj: { test: function (v) { return /^\d{5}$/.test(v); }, poruka: "Poštanski broj ima 5 cifara, npr. 18000." }
     };
